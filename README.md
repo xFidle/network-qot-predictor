@@ -1,0 +1,1 @@
+SVM and Random Forest implementations to estimate quality of transmission in optical networks. Since provided dataset contains highly unbalanced lables (there are almost no "bad" examples), active learning apporach is applied.
