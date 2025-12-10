@@ -3,7 +3,6 @@ from dataclasses import dataclass
 import numpy as np
 
 from src.forest.gini import gini_gain
-from src.forest.mode import PredictionMode
 from src.forest.util import highest_probability_arg, split_at_threshold
 
 
@@ -36,27 +35,30 @@ class CART:
         dataset = np.concatenate((X_train, Y_train), axis=1)
         self.root = self._build_tree(dataset, np.unique(Y_train).size)
 
-    def predict(self, samples: np.ndarray, mode: PredictionMode) -> np.ndarray:
+    def predict(self, samples: np.ndarray) -> np.ndarray:
         if self.root is None:
             raise ValueError("The root is not initialized, call fit() first.")
 
-        match mode:
-            case PredictionMode.LABELS:
-                return np.array([self._predict_class(self.root, sample) for sample in samples])
-            case PredictionMode.PROBABILITIES:
-                return np.array([self._predict_proba(self.root, sample) for sample in samples])
+        return np.array([self._pl(self.root, sample) for sample in samples])
 
-    def _predict_class(self, node: DecisionNode | Leaf, sample: np.ndarray) -> int:
+    def predict_proba(self, samples: np.ndarray) -> np.ndarray:
+        if self.root is None:
+            raise ValueError("The root is not initialized, call fit() first.")
+
+        return np.array([self._pp(self.root, sample) for sample in samples])
+
+    def _pl(self, node: DecisionNode | Leaf, sample: np.ndarray) -> int:
         if isinstance(node, Leaf):
             return highest_probability_arg(node.probabilities)
         child = node.left if sample[node.feature_index] >= node.threshold else node.right
-        return self._predict_class(child, sample)
 
-    def _predict_proba(self, node: DecisionNode | Leaf, sample: np.ndarray) -> np.ndarray:
+        return self._pl(child, sample)
+
+    def _pp(self, node: DecisionNode | Leaf, sample: np.ndarray) -> np.ndarray:
         if isinstance(node, Leaf):
             return node.probabilities
         child = node.left if sample[node.feature_index] >= node.threshold else node.right
-        return self._predict_proba(child, sample)
+        return self._pp(child, sample)
 
     def _build_tree(
         self, dataset: np.ndarray, n_labels: int, current_depth: int = 0

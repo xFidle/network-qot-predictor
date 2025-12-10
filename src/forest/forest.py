@@ -1,10 +1,10 @@
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
+from typing import Callable
 
 import numpy as np
 
 from src.forest.cart import CART, CARTConfig
-from src.forest.mode import PredictionMode
 from src.forest.util import majority_vote
 
 
@@ -32,27 +32,33 @@ class RandomForest:
             self.trees.append(tree)
             self.selected_features.append(indices)
 
-    def predict(self, samples: np.ndarray, mode: PredictionMode) -> np.ndarray:
+    def predict(self, samples: np.ndarray) -> np.ndarray:
         if len(self.trees) == 0:
             raise ValueError("Forest is not initalized, call fit() first.")
 
-        all_predicitions = self._collect_tree_predictions(samples, mode)
-        match mode:
-            case PredictionMode.LABELS:
-                return np.apply_along_axis(majority_vote, 1, all_predicitions)
-            case PredictionMode.PROBABILITIES:
-                return np.mean(all_predicitions, axis=1)
+        all_predictions = self._collect_tree_predictions(samples, lambda tree, x: tree.predict(x))
 
-    def _collect_tree_predictions(self, samples: np.ndarray, mode: PredictionMode) -> np.ndarray:
-        first = self.trees[0].predict(samples[:, self.selected_features[0]], mode)
+        return np.apply_along_axis(majority_vote, 1, all_predictions)
 
-        out_shape = (samples.shape[0], self.n_trees, *first.shape[1:])
-        all_predictions = np.empty(out_shape)
+    def predict_proba(self, samples: np.ndarray) -> np.ndarray:
+        if len(self.trees) == 0:
+            raise ValueError("Forest is not initalized, call fit() first.")
 
-        for i, tree in enumerate(self.trees):
-            all_predictions[:, i] = tree.predict(samples[:, self.selected_features[i]], mode)
+        all_predictions = self._collect_tree_predictions(
+            samples, lambda tree, x: tree.predict_proba(x)
+        )
 
-        return all_predictions
+        return np.mean(all_predictions, axis=1)
+
+    def _collect_tree_predictions(
+        self, samples: np.ndarray, tree_predict: Callable[[CART, np.ndarray], np.ndarray]
+    ) -> np.ndarray:
+        all_predictions = [
+            tree_predict(tree, samples[:, self.selected_features[i]])
+            for i, tree in enumerate(self.trees)
+        ]
+
+        return np.stack(all_predictions, axis=1)
 
     def _build_single_tree(
         self, X_train: np.ndarray, Y_train: np.ndarray
