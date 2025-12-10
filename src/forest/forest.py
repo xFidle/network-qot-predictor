@@ -1,3 +1,4 @@
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 
 import numpy as np
@@ -19,8 +20,13 @@ class RandomForest:
         self.tree_config: CARTConfig = config.tree_config
 
     def fit(self, X_train: np.ndarray, Y_train: np.ndarray) -> None:
-        for _ in range(self.n_trees):
-            tree, indices = self._build_single_tree(X_train, Y_train)
+        with ProcessPoolExecutor() as executor:
+            result = executor.map(
+                self._build_single_tree, [X_train] * self.n_trees, [Y_train] * self.n_trees
+            )
+            executor.shutdown()
+
+        for tree, indices in result:
             self.trees.append(tree)
             self.selected_features.append(indices)
 
