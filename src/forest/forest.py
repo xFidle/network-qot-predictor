@@ -38,7 +38,7 @@ class RandomForest:
         unique, counts = np.unique(votes, return_counts=True)
         most_frequent = unique[counts == counts.max()]
 
-        return most_frequent[0] if most_frequent.shape[0] == 1 else np.random.choice(most_frequent)
+        return np.random.choice(most_frequent)
 
     def _build_single_tree(
         self, X_train: np.ndarray, Y_train: np.ndarray

@@ -6,7 +6,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
-from src.data.encoder import encode_categorical
 from src.forest.cart import CART, CARTConfig
 from src.forest.forest import RandomForest, RandomForestConfig
 
@@ -16,10 +15,10 @@ def main():
     df = pd.read_csv("./data/wine-quality.csv")
     x, y = df.iloc[:, :-2], df.iloc[:, -2:-1]
 
-    y = encode_categorical(y)
-
     x = x.to_numpy()
     y = y.to_numpy()
+
+    y = np.where(y <= 6, 1, 0)
 
     x_train, x_test, y_train, y_test = cast(
         tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray],

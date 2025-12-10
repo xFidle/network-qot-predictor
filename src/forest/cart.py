@@ -1,14 +1,9 @@
 from dataclasses import dataclass
-from typing import Protocol
 
 import numpy as np
 
 from src.forest.gini import gini_gain
 from src.forest.split import split_at_threshold
-
-
-class SplitEvalFunction(Protocol):
-    def __call__(self, parent: np.ndarray, left: np.ndarray, right: np.ndarray) -> float: ...
 
 
 @dataclass
@@ -28,7 +23,6 @@ class Leaf:
 class CARTConfig:
     max_depth: int
     min_samples_split: int
-    eval_function: SplitEvalFunction = gini_gain
 
 
 class CART:
@@ -36,7 +30,6 @@ class CART:
         self.root: DecisionNode | Leaf | None = None
         self.max_depth: int = config.max_depth
         self.min_samples_split: int = config.min_samples_split
-        self.eval_function: SplitEvalFunction = config.eval_function
 
     def fit(self, X_train: np.ndarray, Y_train: np.ndarray) -> None:
         dataset = np.concatenate((X_train, Y_train), axis=1)
@@ -59,15 +52,11 @@ class CART:
 
     def _build_tree(self, dataset: np.ndarray, current_depth: int = 0) -> DecisionNode | Leaf:
         n_samples = dataset.shape[0]
-
         dataset_labels = dataset[:, -1]
-        unique, counts = np.unique(dataset_labels, return_counts=True)
-
-        if unique.size == 1:
-            return Leaf(dataset_labels[0])
 
         split = self._find_best_split(dataset)
         if split is None or n_samples < self.min_samples_split or current_depth >= self.max_depth:
+            unique, counts = np.unique(dataset_labels, return_counts=True)
             most_frequent = unique[counts == counts.max()]
             return Leaf(np.random.choice(most_frequent))
 
@@ -98,7 +87,7 @@ class CART:
                 left_labels = left_split[:, -1]
                 right_labels = right_split[:, -1]
 
-                gain = self.eval_function(dataset_labels, left_labels, right_labels)
+                gain = gini_gain(dataset_labels, left_labels, right_labels)
 
                 if gain > best_gain:
                     best_gain = gain
