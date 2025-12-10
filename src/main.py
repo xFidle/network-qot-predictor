@@ -37,11 +37,8 @@ def main():
     sklearn_forest = RandomForestClassifier(100, random_state=42)
     sklearn_forest.fit(x_train, y_train)
 
-    y_pred_forest = np.zeros(x_test.shape[0])
-    y_pred_tree = np.zeros(x_test.shape[0])
-    for i, sample in enumerate(x_test):
-        y_pred_forest[i] = forest.predict(sample)
-        y_pred_tree[i] = tree.predict(sample)
+    y_pred_tree = tree.predict(x_test)
+    y_pred_forest = forest.predict(x_test)
 
     print("My single tree: ", accuracy_score(y_test, y_pred_tree))
     print("My forest: ", accuracy_score(y_test, y_pred_forest))

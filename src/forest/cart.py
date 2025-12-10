@@ -42,11 +42,11 @@ class CART:
         dataset = np.concatenate((X_train, Y_train), axis=1)
         self.root = self._build_tree(dataset)
 
-    def predict(self, sample: np.ndarray) -> int:
+    def predict(self, samples: np.ndarray) -> np.ndarray:
         if self.root is None:
             raise ValueError("The root is not initialized, call fit() first.")
 
-        return self._predict_recursively(self.root, sample)
+        return np.array([self._predict_recursively(self.root, sample) for sample in samples])
 
     def _predict_recursively(self, node: DecisionNode | Leaf, sample: np.ndarray) -> int:
         if isinstance(node, Leaf):

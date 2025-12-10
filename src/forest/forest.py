@@ -24,18 +24,21 @@ class RandomForest:
             self.trees.append(tree)
             self.selected_features.append(indices)
 
-    def predict(self, sample: np.ndarray) -> int:
+    def predict(self, samples: np.ndarray) -> np.ndarray:
         if len(self.trees) == 0:
             raise ValueError("Forest is not initalized, call fit() first.")
 
-        predictions = np.array(
-            [tree.predict(sample[self.selected_features[i]]) for i, tree in enumerate(self.trees)]
-        )
+        all_predictions = np.empty((samples.shape[0], len(self.trees)))
+        for i, tree in enumerate(self.trees):
+            all_predictions[:, i] = tree.predict(samples[:, self.selected_features[i]])
 
-        unique, counts = np.unique(predictions, return_counts=True)
+        return np.apply_along_axis(self._majority_vote, 1, all_predictions)
+
+    def _majority_vote(self, votes: np.ndarray) -> int:
+        unique, counts = np.unique(votes, return_counts=True)
         most_frequent = unique[counts == counts.max()]
 
-        return most_frequent[0] if most_frequent.size == 1 else np.random.choice(most_frequent)
+        return most_frequent[0] if most_frequent.shape[0] == 1 else np.random.choice(most_frequent)
 
     def _build_single_tree(
         self, X_train: np.ndarray, Y_train: np.ndarray
