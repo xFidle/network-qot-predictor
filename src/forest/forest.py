@@ -3,7 +3,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from src.forest.cart import CART, CARTConfig, PredictionMode
+from src.forest.cart import CART, CARTConfig
+from src.forest.mode import PredictionMode
 from src.forest.util import majority_vote
 
 

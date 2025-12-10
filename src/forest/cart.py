@@ -1,15 +1,10 @@
 from dataclasses import dataclass
-from enum import Enum
 
 import numpy as np
 
 from src.forest.gini import gini_gain
+from src.forest.mode import PredictionMode
 from src.forest.util import highest_probability_arg, split_at_threshold
-
-
-class PredictionMode(Enum):
-    LABELS = 0
-    PROBABILITIES = 1
 
 
 @dataclass
