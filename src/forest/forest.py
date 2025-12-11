@@ -12,6 +12,7 @@ from src.forest.util import majority_vote
 class RandomForestConfig:
     n_trees: int
     tree_config: CARTConfig
+    random_state: int | None = None
 
 
 class RandomForest:
@@ -20,6 +21,7 @@ class RandomForest:
         self.selected_features: list[np.ndarray] = []
         self.n_trees: int = config.n_trees
         self.tree_config: CARTConfig = config.tree_config
+        self.random_state: int | None = config.random_state
 
     def fit(self, X_train: np.ndarray, Y_train: np.ndarray) -> None:
         if len(self.trees) == 0:
@@ -66,7 +68,7 @@ class RandomForest:
     ) -> tuple[CART, np.ndarray]:
         n_samples, n_features = X_train.shape
 
-        rng = np.random.default_rng()
+        rng = np.random.default_rng(self.random_state)
 
         samples_indices = rng.choice(n_samples, int(n_samples), replace=True)
         features_indices = rng.choice(n_features, int(np.sqrt(n_features)), replace=False)
