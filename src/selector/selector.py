@@ -26,3 +26,13 @@ class DiversitySelector:
         mean_distance = np.mean(distances, axis=1)
 
         return np.argsort(mean_distance)[-batch_size:]
+
+
+class RandomSelector:
+    def __init__(self, random_state: int | None = None) -> None:
+        self.random_state: int | None = random_state
+
+    def __call__(self, X: np.ndarray, batch_size: int = 5) -> np.ndarray:
+        rng = np.random.default_rng(self.random_state)
+
+        return rng.choice(X)
