@@ -35,17 +35,17 @@ class CART:
         dataset = np.concatenate((X_train, Y_train), axis=1)
         self.root = self._build_tree(dataset, np.unique(Y_train).size)
 
-    def predict(self, samples: np.ndarray) -> np.ndarray:
+    def predict(self, X: np.ndarray) -> np.ndarray:
         if self.root is None:
             raise ValueError("The root is not initialized, call fit() first.")
 
-        return np.array([self._pl(self.root, sample) for sample in samples])
+        return np.array([self._pl(self.root, sample) for sample in X])
 
-    def predict_proba(self, samples: np.ndarray) -> np.ndarray:
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
         if self.root is None:
             raise ValueError("The root is not initialized, call fit() first.")
 
-        return np.array([self._pp(self.root, sample) for sample in samples])
+        return np.array([self._pp(self.root, sample) for sample in X])
 
     def _pl(self, node: DecisionNode | Leaf, sample: np.ndarray) -> int:
         if isinstance(node, Leaf):

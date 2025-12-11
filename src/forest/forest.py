@@ -32,30 +32,27 @@ class RandomForest:
             self.trees.append(tree)
             self.selected_features.append(indices)
 
-    def predict(self, samples: np.ndarray) -> np.ndarray:
+    def predict(self, X: np.ndarray) -> np.ndarray:
         if len(self.trees) == 0:
             raise ValueError("Forest is not initalized, call fit() first.")
 
-        all_predictions = self._collect_tree_predictions(samples, lambda tree, x: tree.predict(x))
+        all_predictions = self._collect_tree_predictions(X, lambda tree, x: tree.predict(x))
 
         return np.apply_along_axis(majority_vote, 1, all_predictions)
 
-    def predict_proba(self, samples: np.ndarray) -> np.ndarray:
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
         if len(self.trees) == 0:
             raise ValueError("Forest is not initalized, call fit() first.")
 
-        all_predictions = self._collect_tree_predictions(
-            samples, lambda tree, x: tree.predict_proba(x)
-        )
+        all_predictions = self._collect_tree_predictions(X, lambda tree, x: tree.predict_proba(x))
 
         return np.mean(all_predictions, axis=1)
 
     def _collect_tree_predictions(
-        self, samples: np.ndarray, tree_predict: Callable[[CART, np.ndarray], np.ndarray]
+        self, X: np.ndarray, tree_predict: Callable[[CART, np.ndarray], np.ndarray]
     ) -> np.ndarray:
         all_predictions = [
-            tree_predict(tree, samples[:, self.selected_features[i]])
-            for i, tree in enumerate(self.trees)
+            tree_predict(tree, X[:, self.selected_features[i]]) for i, tree in enumerate(self.trees)
         ]
 
         return np.stack(all_predictions, axis=1)

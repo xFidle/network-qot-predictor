@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 
 from src.forest.cart import CART, CARTConfig
 from src.forest.forest import RandomForest, RandomForestConfig
-from src.query.uncertainty import uncertainty_sampling
+from src.selector.selector import DiversitySelector, UncertaintySelector
 
 
 # Proof of working classifier
@@ -37,12 +37,14 @@ def main():
     sklearn_forest = RandomForestClassifier(100, random_state=42)
     sklearn_forest.fit(x_train, y_train)
 
-    forest_proba = forest.predict_proba(x_test)
+    diverisity_selector = DiversitySelector()
+    uncertainty_selector = UncertaintySelector()
 
-    uncertain_samples = uncertainty_sampling(forest_proba, k=10)
+    different_samples = diverisity_selector(forest, x_test)
+    uncertain_samples = uncertainty_selector(forest, x_test)
 
-    print("Most unsure:\n", x_test[uncertain_samples, :])
-    print("Probas:\n", forest_proba[uncertain_samples, :])
+    print("Most different:\n", different_samples)
+    print("Mose unsure:\n", uncertain_samples)
 
     print("My single tree: ", accuracy_score(y_test, tree.predict(x_test)))
     print("My forest: ", accuracy_score(y_test, forest.predict(x_test)))

@@ -1,0 +1,9 @@
+from typing import Protocol
+
+import numpy as np
+
+
+class Classifier(Protocol):
+    def fit(self, X_train: np.ndarray, Y_train: np.ndarray) -> None: ...
+    def predict(self, X: np.ndarray) -> np.ndarray: ...
+    def predict_proba(self, X: np.ndarray) -> np.ndarray: ...
