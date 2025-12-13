@@ -1,14 +1,14 @@
+from pathlib import Path
 from typing import cast
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
-from src.forest.cart import CART, CARTConfig
+from src.forest.cart import CARTConfig
 from src.forest.forest import RandomForest, RandomForestConfig
-from src.selector.selector import DiversitySelector, UncertaintySelector
+from src.learner.learner import ActiveLearner, ActiveLearnerConfig, LearningData
+from src.selector.selector import UncertaintySelector
 
 
 # Proof of working classifier
@@ -25,30 +25,20 @@ def main():
         tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray], train_test_split(x, y, test_size=0.8)
     )
 
-    config = CARTConfig(10, 2)
-
-    tree = CART(config)
-    tree.fit(x_train, y_train)
-
-    forest_config = RandomForestConfig(100, config)
+    cart_config = CARTConfig(10, 2)
+    forest_config = RandomForestConfig(100, cart_config)
     forest = RandomForest(forest_config)
-    forest.fit(x_train, y_train)
 
-    sklearn_forest = RandomForestClassifier(100, random_state=42)
-    sklearn_forest.fit(x_train, y_train)
+    learner_config = ActiveLearnerConfig(
+        forest,
+        UncertaintySelector(forest),
+        Path("forest-test"),
+        LearningData(x_train[:-10, :], y_train[:-10], x_train[-10:, :]),
+    )
 
-    diverisity_selector = DiversitySelector()
-    uncertainty_selector = UncertaintySelector()
+    learner = ActiveLearner(learner_config)
 
-    different_samples = diverisity_selector(forest, x_test)
-    uncertain_samples = uncertainty_selector(forest, x_test)
-
-    print("Most different:\n", different_samples)
-    print("Mose unsure:\n", uncertain_samples)
-
-    print("My single tree: ", accuracy_score(y_test, tree.predict(x_test)))
-    print("My forest: ", accuracy_score(y_test, forest.predict(x_test)))
-    print("SKLEARN forest: ", accuracy_score(y_test, sklearn_forest.predict(x_test)))
+    learner.loop(x_test, y_test)
 
 
 if __name__ == "__main__":

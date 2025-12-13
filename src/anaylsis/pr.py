@@ -14,7 +14,7 @@ class PRMetrics:
 
 
 def calculate_pr_metrics(
-    X_test: np.ndarray, y_test: np.ndarray, classifier: Classifier
+    classifier: Classifier, X_test: np.ndarray, y_test: np.ndarray
 ) -> PRMetrics:
     proba = classifier.predict_proba(X_test)[:, 1]
     precision, recall, _ = precision_recall_curve(y_test, proba)
