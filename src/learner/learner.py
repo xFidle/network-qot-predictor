@@ -10,7 +10,8 @@ from src.config import DEFAULT_STORE_DIR
 from src.model.classifier import Classifier
 from src.selector.selector import Selector
 
-TRAINING_DATA_DIR = "data"
+DEFAULT_STORE_DIR = ".sessions"
+TRAINING_DATA_DIR = "train"
 METRICS_DIR = "metrics"
 SAVING_THRESHOLDS = [1.0, 0.5, 0.4, 0.3, 0.25]
 
@@ -81,6 +82,7 @@ class ActiveLearner:
                     print("Label added.")
 
                 logger.info(f"Samples batch of size {size} successfully labeled")
+
                 self.classifier.fit(self.data.X_train, self.data.y_train)
                 logger.info("Training with new data finished successfully.")
 
@@ -89,11 +91,13 @@ class ActiveLearner:
                 logger.info(f"PR Metrics calculated and saved in {self.save_dir / METRICS_DIR}.")
 
             logger.info("Successfully labeled all samples. Learning finished.")
+
             self._save_data()
             logger.info(f"Learning data saved to {self.save_dir / TRAINING_DATA_DIR}.")
 
         except (KeyboardInterrupt, QuitLabeling):
             logger.info("Process interrupted by user.")
+
             self._save_data()
             logger.info(f"Learning data saved to {self.save_dir / TRAINING_DATA_DIR}.")
 
@@ -124,7 +128,7 @@ class ActiveLearner:
         metrics_dir = self.save_dir / METRICS_DIR
         metrics_dir.mkdir(parents=True, exist_ok=True)
 
-        thresholds = SAVING_THRESHOLDS
+        thresholds = [1.0, 0.5, 0.4, 0.3, 0.25]
         labeled_ratio = self.data.X_train.shape[0] / (
             self.data.X_train.shape[0] + self.data.X_unlabeled.shape[0]
         )
