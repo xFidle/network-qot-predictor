@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 def download_data(
     data_dir: Path | str,
+    dataset: str,
     force_download: bool = False,
-    dataset: str = "imsparsh/flowers-dataset",
     subdirs_to_copy: list[str] | None = None,
 ):
     """
@@ -101,6 +101,7 @@ def main():
     download_dir = Path(args.data_dir)
     download_data(
         download_dir,
+        dataset="imsparsh/flowers-dataset",
         force_download=args.force_download,
         subdirs_to_copy=["train/dandelion", "train/sunflower"],
     )
