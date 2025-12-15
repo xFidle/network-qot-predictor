@@ -85,17 +85,13 @@ class FeatureExtractor:
 
         data: list[dict[str, int | float | str]] = []
         for image_file in image_files:
-            try:
-                features: npt.NDArray[np.float32] = self.extract_features(image_file)
-                row: dict[str, int | float | str] = {
-                    **{f"feature_{j}": features[j] for j in range(len(features))},
-                    "filename": image_file.name,
-                    "class": class_label,
-                }
-                data.append(row)
-            except Exception as e:
-                print(f"Error processing {image_file}: {e}")
-                continue
+            features: npt.NDArray[np.float32] = self.extract_features(image_file)
+            row: dict[str, int | float | str] = {
+                **{f"feature_{j}": features[j] for j in range(len(features))},
+                "filename": image_file.name,
+                "class": class_label,
+            }
+            data.append(row)
 
         df: pd.DataFrame = pd.DataFrame(data)
 
