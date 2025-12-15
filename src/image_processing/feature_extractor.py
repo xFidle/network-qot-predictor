@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Literal, Protocol
 
@@ -8,6 +9,8 @@ import torch
 import torch.nn as nn
 from PIL import Image
 from torchvision import models, transforms
+
+logger = logging.getLogger(__name__)
 
 
 class ModelSetup(Protocol):
@@ -79,9 +82,11 @@ class FeatureExtractor:
         ]
 
         if not image_files:
-            raise ValueError(f"No images found in {image_dir}")
+            error_msg = f"No images found in {image_dir}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
-        print(f"Processing {len(image_files)} images from {image_dir}")
+        logger.info(f"Processing {len(image_files)} images from {image_dir}")
 
         data: list[dict[str, int | float | str]] = []
         for image_file in image_files:
@@ -97,6 +102,6 @@ class FeatureExtractor:
 
         output_csv.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(output_csv, index=False)
-        print(f"Saved {len(df)} samples to {output_csv}")
+        logger.info(f"Saved {len(df)} samples to {output_csv}")
 
         return df
