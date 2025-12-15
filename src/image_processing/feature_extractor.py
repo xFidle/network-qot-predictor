@@ -87,8 +87,8 @@ class FeatureExtractor:
         for image_file in image_files:
             features: npt.NDArray[np.float32] = self.extract_features(image_file)
             row: dict[str, int | float | str] = {
-                **{f"feature_{j}": features[j] for j in range(len(features))},
                 "filename": image_file.name,
+                **{f"feature_{j}": features[j] for j in range(len(features))},
                 "class": class_label,
             }
             data.append(row)
