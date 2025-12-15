@@ -1,4 +1,4 @@
-import logging
+import argparse
 from pathlib import Path
 from typing import cast
 
@@ -10,10 +10,23 @@ from src.forest.cart import CARTConfig
 from src.forest.forest import RandomForest, RandomForestConfig
 from src.learner.learner import ActiveLearner, ActiveLearnerConfig, LearningData
 from src.selector.selector import UncertaintySelector
+from src.utils.argparse_logger import add_logger_arguments, get_logger_config_from_args
+from src.utils.logger import setup_logger
 
 
-# Proof of working classifier
+def parse_args():
+    parser = argparse.ArgumentParser(description="Active learning test")
+    add_logger_arguments(parser)
+    args = parser.parse_args()
+    logger_config = get_logger_config_from_args(args)
+    setup_logger(logger_config)
+
+
 def main():
+    parse_args()
+
+    session_name = "forest-test"
+
     df = pd.read_csv("./data/wine-quality.csv")
     x, y = df.iloc[:, :-2], df.iloc[:, -2:-1]
 
@@ -24,11 +37,6 @@ def main():
 
     x_train, x_test, y_train, y_test = cast(
         tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray], train_test_split(x, y, test_size=0.8)
-    )
-
-    session_name = "forest-test"
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", filename="logs"
     )
 
     cart_config = CARTConfig(10, 2)
