@@ -9,7 +9,7 @@ from src.analysis.pr import PRMetrics, calculate_pr_metrics
 from src.model.classifier import Classifier
 from src.selector.selector import Selector
 
-DEFAULT_STORE_DIR = ".sessions"
+DEFAULT_STORE_DIR = "sessions"
 TRAINING_DATA_DIR = "train"
 METRICS_DIR = "metrics"
 
@@ -43,22 +43,24 @@ class ActiveLearner:
         self.data: LearningData
 
         if self.save_dir.exists():
-            logger.info("Session restored, data loaded from files.")
+            logger.info("Session restored, data loaded from files")
             self.data = self._load_learning_data()
 
         elif config.learning_data is not None:
-            logger.info("New session created, data loaded from config.")
+            logger.info("New session created, data loaded from config")
             self.data = config.learning_data
 
         else:
-            msg = "Learning data is not available. Provide it using config or relative directory path."
+            msg = (
+                "Learning data is not available. Provide it using config or relative directory path"
+            )
             logger.error(msg)
             raise ValueError(msg)
 
     def loop(self, X_test: np.ndarray, y_test: np.ndarray, batch_size: int = 5) -> None:
         try:
             self.classifier.fit(self.data.X_train, self.data.y_train)
-            logger.info("Initial training done.")
+            logger.info("Initial training done")
 
             while self.data.X_unlabeled.shape[0] != 0:
                 logger.info(f"Samples remaining: {self.data.X_unlabeled.shape[0]}")
@@ -67,8 +69,9 @@ class ActiveLearner:
                     self.data.X_unlabeled, self.data.X_train, batch_size
                 )
                 size = len(samples_indices)
-                logger.info(f"Selected next {size} samples to label.")
+                logger.info(f"Selected next {size} samples to label")
 
+                print(f"{'=' * 50}")
                 for index in sorted(samples_indices, reverse=True):
                     # TODO: display image instead of feature vector
                     print("Sample: ", self.data.X_unlabeled[index, :])
@@ -81,27 +84,28 @@ class ActiveLearner:
                         raise QuitLabeling()
 
                     self._label_sample(index, int(label))
-                    print("Label added.")
+                print(f"{'=' * 50}")
 
                 logger.info(f"Samples batch of size {size} successfully labeled")
 
                 self.classifier.fit(self.data.X_train, self.data.y_train)
-                logger.info("Training with new data finished successfully.")
+                logger.info("Training with new data finished successfully")
 
                 metrics = calculate_pr_metrics(self.classifier, X_test, y_test)
                 self._save_metrics(metrics)
-                logger.info(f"PR Metrics calculated and saved in {self.save_dir / METRICS_DIR}.")
+                logger.info(f"PR Metrics calculated and saved in {self.save_dir / METRICS_DIR}")
 
-            logger.info("Successfully labeled all samples. Learning finished.")
+            logger.info("Successfully labeled all samples. Learning finished")
 
             self._save_data()
-            logger.info(f"Learning data saved to {self.save_dir / TRAINING_DATA_DIR}.")
+            logger.info(f"Learning data saved to {self.save_dir / TRAINING_DATA_DIR}")
 
         except (KeyboardInterrupt, QuitLabeling):
-            logger.info("Process interrupted by user.")
+            print(f"{'=' * 50}")
+            logger.info("Process interrupted by user")
 
             self._save_data()
-            logger.info(f"Learning data saved to {self.save_dir / TRAINING_DATA_DIR}.")
+            logger.info(f"Learning data saved to {self.save_dir / TRAINING_DATA_DIR}")
 
     def _label_sample(self, sample_index: int, label: int) -> None:
         sample = self.data.X_unlabeled[sample_index, :]
