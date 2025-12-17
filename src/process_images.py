@@ -60,30 +60,25 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Process flower images and extract features")
 
     parser.add_argument(
-        "--data-dir",
-        type=str,
-        default="data/flowers/images",
-        help="Directory to download/store image data",
+        "--data-dir", type=str, default=None, help="Directory to download/store image data"
     )
 
     parser.add_argument(
-        "--output-dir",
-        type=str,
-        default="data/flowers/processed",
-        help="Directory to save processed features",
+        "--output-dir", type=str, default=None, help="Directory to save processed features"
     )
 
     parser.add_argument(
         "--model",
         type=str,
         choices=["resnet50", "vgg16"],
-        default="resnet50",
+        default=None,
         help="Model to use for feature extraction",
     )
 
     parser.add_argument(
         "--force-download",
         action="store_true",
+        default=None,
         help="Force re-download of dataset even if it exists",
     )
 
