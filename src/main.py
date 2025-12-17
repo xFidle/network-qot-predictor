@@ -7,10 +7,9 @@ from sklearn.model_selection import train_test_split
 
 from src.config import ConfigParser
 from src.config.logger import LoggerConfig
-from src.forest.cart import CARTConfig
-from src.forest.forest import RandomForest, RandomForestConfig
 from src.learner.learner import ActiveLearner, ActiveLearnerConfig, LearningData
-from src.selector.selector import UncertaintySelector
+from src.model.classifier import resolve_model
+from src.selector.selector import resolve_selector
 from src.utils.logger import setup_logger
 
 
@@ -21,9 +20,10 @@ def parse_config():
 
 
 def main():
-    parse_config()
+    args = parse_args()
 
-    session_name = "forest-test"
+    logger_config = get_logger_config_from_args(args)
+    _ = setup_logger(logger_config)
 
     df = pd.read_csv("./data/wine-quality.csv")
     x, y = df.iloc[:, :-2], df.iloc[:, -2:-1]
@@ -37,17 +37,15 @@ def main():
         tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray], train_test_split(x, y, test_size=0.8)
     )
 
-    cart_config = CARTConfig(10, 2)
-    forest_config = RandomForestConfig(100, cart_config)
-    forest = RandomForest(forest_config)
+    classifier = resolve_model(args.model)
+    selector = resolve_selector(args.selector, classifier)
 
     learner_config = ActiveLearnerConfig(
-        forest,
-        UncertaintySelector(forest),
-        Path(session_name),
+        classifier,
+        selector,
+        Path(args.session_name),
         LearningData(x_train[:-10, :], y_train[:-10], x_train[-10:, :]),
     )
-
     learner = ActiveLearner(learner_config)
     learner.loop(x_test, y_test)
 

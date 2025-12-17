@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Literal, Protocol
 
 import numpy as np
 
@@ -49,3 +49,15 @@ class RandomSelector:
         size = min(batch_size, X_unlabeled.shape[0])
 
         return rng.choice(X_unlabeled.shape[0], size, replace=False)
+
+
+def resolve_selector(
+    name: Literal["uncertainty", "diversity", "random"], classifier: Classifier
+) -> Selector:
+    match name:
+        case "uncertainty":
+            return UncertaintySelector(classifier)
+        case "diversity":
+            return DiversitySelector()
+        case "random":
+            return RandomSelector()

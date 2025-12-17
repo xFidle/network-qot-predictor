@@ -21,13 +21,13 @@ class SVM:
         self.platt_a: float | None = None
         self.platt_b: float | None = None
 
-    def fit(self, X_train: np.ndarray, Y_train: np.ndarray):
+    def fit(self, X_train: np.ndarray, y_train: np.ndarray) -> None:
         _, n_features = X_train.shape
 
         w = np.zeros(n_features)
         b = 0.0
 
-        y = np.where(Y_train <= 0, -1, 1)
+        y = np.where(y_train <= 0, -1, 1)
 
         for _ in range(self.iter_count):
             for idx, x_i in enumerate(X_train):
@@ -42,7 +42,7 @@ class SVM:
         self.w = w
         self.b = b
 
-        self._fit_platt_scaling(X_train, Y_train)
+        self._fit_platt_scaling(X_train, y_train)
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         pred = np.sign(self._decision_function(X))
