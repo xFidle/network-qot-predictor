@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from src.config import ConfigParser
+from src.config.logger import LoggerConfig
 from src.forest.cart import CARTConfig
 from src.forest.forest import RandomForest, RandomForestConfig
 from src.learner.learner import ActiveLearner, ActiveLearnerConfig, LearningData
@@ -13,14 +14,14 @@ from src.selector.selector import UncertaintySelector
 from src.utils.logger import setup_logger
 
 
-def parse_args():
+def parse_config():
     config_parser = ConfigParser()
-    logger_config = config_parser.get_logger_config()
+    logger_config = config_parser.get(LoggerConfig)
     setup_logger(logger_config)
 
 
 def main():
-    parse_args()
+    parse_config()
 
     session_name = "forest-test"
 
