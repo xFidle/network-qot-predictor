@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 
 from src.analysis.pr import PRMetrics, calculate_pr_metrics
+from src.learner.gui import LabelingWindow
 from src.model.classifier import Classifier
 from src.selector.selector import Selector
 
@@ -23,8 +24,10 @@ class QuitLabeling(Exception):
 @dataclass
 class LearningData:
     X_train: np.ndarray
-    y_train: np.ndarray
     X_unlabeled: np.ndarray
+    y_train: np.ndarray
+    X_train_images_paths: list[str]
+    X_unlabeled_images_paths: list[str]
 
 
 @dataclass
@@ -44,7 +47,7 @@ class ActiveLearner:
 
         if self.save_dir.exists():
             logger.info("Session restored, data loaded from files")
-            self.data = self._load_learning_data()
+            self.data = self._load_data()
 
         elif config.learning_data is not None:
             logger.info("New session created, data loaded from config")
@@ -59,9 +62,10 @@ class ActiveLearner:
 
     def loop(self, X_test: np.ndarray, y_test: np.ndarray, batch_size: int = 5) -> None:
         try:
-            self.classifier.fit(self.data.X_train, self.data.y_train)
+            # self.classifier.fit(self.data.X_train, self.data.y_train)
             logger.info("Initial training done")
 
+            window = LabelingWindow(("sunflower", "dandelion"))
             while self.data.X_unlabeled.shape[0] != 0:
                 logger.info(f"Samples remaining: {self.data.X_unlabeled.shape[0]}")
 
@@ -71,20 +75,17 @@ class ActiveLearner:
                 size = len(samples_indices)
                 logger.info(f"Selected next {size} samples to label")
 
-                print(f"{'=' * 50}")
                 for index in sorted(samples_indices, reverse=True):
-                    # TODO: display image instead of feature vector
-                    print("Sample: ", self.data.X_unlabeled[index, :])
-
-                    label = input("Enter label (0, 1, q): ")
-                    while label not in ("0", "1", "q"):
-                        label = input("Invalid label, enter once again: ")
+                    img_path = Path(self.data.X_unlabeled_images_paths[int(index)])
+                    window.set_sample(img_path)
+                    label = window.wait_for_label()
 
                     if label == "q":
+                        window.quit()
                         raise QuitLabeling()
 
+                    logger.info(f"Image: {self.data.X_unlabeled_images_paths[int(index)]} labeled")
                     self._label_sample(index, int(label))
-                print(f"{'=' * 50}")
 
                 logger.info(f"Samples batch of size {size} successfully labeled")
 
@@ -97,11 +98,11 @@ class ActiveLearner:
 
             logger.info("Successfully labeled all samples. Learning finished")
 
+            window.quit()
             self._save_data()
             logger.info(f"Learning data saved to {self.save_dir / TRAINING_DATA_DIR}")
 
         except (KeyboardInterrupt, QuitLabeling):
-            print(f"{'=' * 50}")
             logger.info("Process interrupted by user")
 
             self._save_data()
@@ -113,14 +114,23 @@ class ActiveLearner:
         self.data.X_train = np.concatenate((self.data.X_train, sample[np.newaxis, :]), axis=0)
         self.data.y_train = np.append(self.data.y_train, int(label))
 
-    def _load_learning_data(self) -> LearningData:
+        sampled_image = self.data.X_unlabeled_images_paths.pop(sample_index)
+        self.data.X_train_images_paths.append(sampled_image)
+
+    def _load_data(self) -> LearningData:
         data_dir = self.save_dir / TRAINING_DATA_DIR
 
         X_train = np.load(data_dir / "x_train.npy")
         y_train = np.load(data_dir / "y_train.npy")
         x_unlabeled = np.load(data_dir / "x_unlabeled.npy")
 
-        return LearningData(X_train, y_train, x_unlabeled)
+        with open(data_dir / "x_train_images_paths", "r") as fh:
+            images_train = [line.strip() for line in fh.readlines()]
+
+        with open(data_dir / "x_unlabeled_images_paths", "r") as fh:
+            images_unlabeled = [line.strip() for line in fh.readlines()]
+
+        return LearningData(X_train, x_unlabeled, y_train, images_train, images_unlabeled)
 
     def _save_data(self) -> None:
         data_dir = self.save_dir / TRAINING_DATA_DIR
@@ -129,6 +139,12 @@ class ActiveLearner:
         np.save(data_dir / "x_train", self.data.X_train)
         np.save(data_dir / "y_train", self.data.y_train)
         np.save(data_dir / "x_unlabeled", self.data.X_unlabeled)
+
+        with open(data_dir / "x_train_images_paths", "w") as fh:
+            fh.writelines([file + "\n" for file in self.data.X_train_images_paths])
+
+        with open(data_dir / "x_unlabeled_images_paths", "w") as fh:
+            fh.writelines([file + "\n" for file in self.data.X_unlabeled_images_paths])
 
     def _save_metrics(self, metrics: PRMetrics) -> None:
         metrics_dir = self.save_dir / METRICS_DIR
