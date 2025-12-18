@@ -40,11 +40,10 @@ class ActiveLearnerConfig:
 
 class ActiveLearner:
     def __init__(self, config: ActiveLearnerConfig) -> None:
-        self.classifier: Classifier = config.classifier
-        self.selector: Selector = config.selector
-        self.save_dir: Path = DEFAULT_STORE_DIR / config.save_dir
-        self.data: LearningData
-
+        self.classifier = config.classifier
+        self.selector = config.selector
+        self.save_dir = DEFAULT_STORE_DIR / config.save_dir
+        self.data
         if self.save_dir.exists():
             logger.info("Session restored, data loaded from files")
             self.data = self._load_data()
@@ -62,7 +61,7 @@ class ActiveLearner:
 
     def loop(self, X_test: np.ndarray, y_test: np.ndarray, batch_size: int = 5) -> None:
         try:
-            # self.classifier.fit(self.data.X_train, self.data.y_train)
+            self.classifier.fit(self.data.X_train, self.data.y_train)
             logger.info("Initial training done")
 
             window = LabelingWindow(

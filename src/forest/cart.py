@@ -28,8 +28,8 @@ class CARTConfig:
 class CART:
     def __init__(self, config: CARTConfig) -> None:
         self.root: DecisionNode | Leaf | None = None
-        self.max_depth: int = config.max_depth
-        self.min_samples_split: int = config.min_samples_split
+        self.max_depth = config.max_depth
+        self.min_samples_split = config.min_samples_split
 
     def fit(self, X_train: np.ndarray, y_train: np.ndarray) -> None:
         if self.root is not None:

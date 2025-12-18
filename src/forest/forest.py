@@ -19,9 +19,9 @@ class RandomForest:
     def __init__(self, config: RandomForestConfig) -> None:
         self.trees: list[CART] = []
         self.selected_features: list[np.ndarray] = []
-        self.n_trees: int = config.n_trees
-        self.tree_config: CARTConfig = config.tree_config
-        self.forest_rng: np.random.Generator = np.random.default_rng(config.seed)
+        self.n_trees = config.n_trees
+        self.tree_config = config.tree_config
+        self.forest_rng = np.random.default_rng(config.seed)
 
     def fit(self, X_train: np.ndarray, y_train: np.ndarray) -> None:
         if len(self.trees) == 0:
