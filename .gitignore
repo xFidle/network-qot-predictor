@@ -13,6 +13,5 @@ wheels/
 .vscode
 .idea
 
-# Sessions
-.sessions
-logs
+data
+
