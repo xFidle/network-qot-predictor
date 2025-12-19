@@ -1,9 +1,6 @@
 from pathlib import Path
-from typing import cast
 
-import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
 
 from src.active_learning.learner import ActiveLearnerConfig, LearnerTester, TesterConfig
 from src.active_learning.selector import resolve_selector
@@ -16,6 +13,7 @@ def main():
     config_parser = ConfigParser()
     logger_config = config_parser.get(LoggerConfig)
     setup_logger(logger_config)
+
     df = pd.read_csv("data/active_learning/flowers.csv")
 
     x, y = df.iloc[:, :-1], df.iloc[:, -1]
@@ -23,15 +21,11 @@ def main():
     x = x.to_numpy()
     y = y.to_numpy()
 
-    x_train, x_test, y_train, y_test = cast(
-        tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray], train_test_split(x, y, test_size=0.8)
-    )
-
     classifier = resolve_model("forest")
     selector = resolve_selector("random", classifier)
 
-    learner_config = ActiveLearnerConfig(classifier, selector, 5, True)
-    tester_config = TesterConfig(Path("abc"), n_splits=2, n_repeats=1)
+    learner_config = ActiveLearnerConfig(classifier, selector, 10, True)
+    tester_config = TesterConfig(Path("results/forest-test"), n_splits=5, n_repeats=3)
     tester = LearnerTester(learner_config, tester_config)
     print(tester.aggregate_results(x, y))
 
