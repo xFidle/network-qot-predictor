@@ -153,7 +153,7 @@ class LearnerTester:
         self._process_pr(all_pr)
 
     def _process_auc(self, all_auc: list[AUCHistory]) -> None:
-        labeled_ratio = np.array([t[0] for t in all_auc[0]])
+        labeled_ratio = np.array([round(t[0], 2) for t in all_auc[0]])
         values = np.array([[t[1] for t in record] for record in all_auc])
 
         data = {
@@ -176,7 +176,7 @@ class LearnerTester:
 
         for i, thr in enumerate(thresholds):
             data = {"recall": recall_mean[i, :], "precision": precision_mean[i, :]}
-            pd.DataFrame(data).to_csv(self.save_dir / f"pr-curve-{thr}.csv")
+            pd.DataFrame(data).to_csv(self.save_dir / f"pr-curve-{round(thr, 2) * 100}.csv")
 
     def _run_single_learner(
         self, learner: ActiveLearner, X_test: np.ndarray, y_test: np.ndarray
