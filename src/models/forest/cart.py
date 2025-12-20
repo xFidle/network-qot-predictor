@@ -36,6 +36,7 @@ class CART:
             self.root = None
 
         dataset = np.concatenate((X_train, y_train[:, np.newaxis]), axis=1)
+        self.classes = np.unique(y_train)
         self.root = self._build_tree(dataset, np.unique(y_train).size)
 
     def predict(self, X: np.ndarray) -> np.ndarray:

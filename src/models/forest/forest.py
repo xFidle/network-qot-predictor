@@ -1,6 +1,5 @@
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
-from typing import Callable
 
 import numpy as np
 
@@ -28,12 +27,13 @@ class RandomForest:
             self.trees = []
             self.selected_features = []
 
+        self.classes = np.unique(y_train)
+
         with ProcessPoolExecutor() as executor:
             seeds = self.forest_rng.integers(0, 2**32 - 1, size=self.n_trees)
             result = executor.map(
                 self._build_single_tree, [X_train] * self.n_trees, [y_train] * self.n_trees, seeds
             )
-            executor.shutdown()
 
         for tree, indices in result:
             self.trees.append(tree)
@@ -43,7 +43,7 @@ class RandomForest:
         if len(self.trees) == 0:
             raise ValueError("Forest is not initalized, call fit() first.")
 
-        all_predictions = self._collect_tree_predictions(X, lambda tree, x: tree.predict(x))
+        all_predictions = self._collect_tree_labels(X)
 
         return np.apply_along_axis(majority_vote, 1, all_predictions)
 
@@ -51,18 +51,29 @@ class RandomForest:
         if len(self.trees) == 0:
             raise ValueError("Forest is not initalized, call fit() first.")
 
-        all_predictions = self._collect_tree_predictions(X, lambda tree, x: tree.predict_proba(x))
+        all_predictions = self._collect_tree_proba(X)
 
         return np.mean(all_predictions, axis=1)
 
-    def _collect_tree_predictions(
-        self, X: np.ndarray, tree_predict: Callable[[CART, np.ndarray], np.ndarray]
-    ) -> np.ndarray:
-        all_predictions = [
-            tree_predict(tree, X[:, self.selected_features[i]]) for i, tree in enumerate(self.trees)
-        ]
+    def _collect_tree_labels(self, X: np.ndarray) -> np.ndarray:
+        return np.stack(
+            [tree.predict(X[:, self.selected_features[i]]) for i, tree in enumerate(self.trees)],
+            axis=1,
+        )
 
-        return np.stack(all_predictions, axis=1)
+    def _collect_tree_proba(self, X: np.ndarray) -> np.ndarray:
+        all_proba: list[np.ndarray] = []
+
+        for i, tree in enumerate(self.trees):
+            proba = tree.predict_proba(X[:, self.selected_features[i]])
+            aligned = np.zeros((proba.shape[0], self.classes.shape[0]))
+
+            indices = np.searchsorted(self.classes, tree.classes)
+            aligned[:, indices] = proba
+
+            all_proba.append(aligned)
+
+        return np.stack(all_proba, axis=1)
 
     def _build_single_tree(
         self, X_train: np.ndarray, y_train: np.ndarray, seed: int
