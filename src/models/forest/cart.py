@@ -2,8 +2,9 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from .gini import gini_gain
-from .util import highest_probability_arg, split_at_threshold
+from src.models.forest.util import gini_impurity
+
+from .util import highest_probability_arg
 
 
 @dataclass
@@ -78,37 +79,54 @@ class CART:
             proba[unique.astype(int)] = counts / np.sum(counts)
             return Leaf(proba)
 
-        feature, threshold, left_split, right_split = split
+        feature, threshold, left_mask, right_mask = split
 
-        left_subtree = self._build_tree(left_split, n_labels, current_depth + 1)
-        right_subtree = self._build_tree(right_split, n_labels, current_depth + 1)
+        left_subtree = self._build_tree(dataset[left_mask], n_labels, current_depth + 1)
+        right_subtree = self._build_tree(dataset[right_mask], n_labels, current_depth + 1)
 
         return DecisionNode(feature, threshold, left_subtree, right_subtree)
 
     def _find_best_split(
         self, dataset: np.ndarray
     ) -> tuple[int, float, np.ndarray, np.ndarray] | None:
-        n_features = dataset.shape[1] - 1
+        n_samples, n_features = dataset.shape[0], dataset.shape[1] - 1
+        labels = dataset[:, -1].astype(int)
+
+        initial_right = np.bincount(labels)
+        parent_impurity = gini_impurity(initial_right)
+
         best_gain = -np.inf
         best_split = None
 
         for feature_index in range(n_features):
-            unique_values = np.unique(dataset[:, feature_index])
+            feature_column = dataset[:, feature_index]
 
-            for threshold in unique_values:
-                left_split, right_split = split_at_threshold(dataset, feature_index, threshold)
+            sort_indices = np.argsort(feature_column)
+            features_sorted = feature_column[sort_indices]
+            labels_sorted = labels[sort_indices]
 
-                if left_split.size == 0 or right_split.size == 0:
+            right_counts = np.copy(initial_right)
+            left_counts = np.zeros_like(right_counts)
+
+            for i in range(n_samples - 1):
+                if features_sorted[i] == features_sorted[i + 1]:
                     continue
 
-                dataset_labels = dataset[:, -1]
-                left_labels = left_split[:, -1]
-                right_labels = right_split[:, -1]
+                label = labels_sorted[i]
+                left_counts[label] += 1
+                right_counts[label] -= 1
 
-                gain = gini_gain(dataset_labels, left_labels, right_labels)
+                gain = (
+                    parent_impurity
+                    - (left_counts.sum() / n_samples) * gini_impurity(left_counts)
+                    - (right_counts.sum() / n_samples) * gini_impurity(right_counts)
+                )
 
                 if gain > best_gain:
                     best_gain = gain
-                    best_split = (feature_index, threshold, left_split, right_split)
+                    thr = (features_sorted[i] + features_sorted[i + 1]) / 2
+                    left_mask = feature_column >= thr
+                    right_mask = ~left_mask
+                    best_split = (feature_index, thr, left_mask, right_mask)
 
         return best_split
