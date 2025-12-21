@@ -55,14 +55,14 @@ class CART:
     def _pl(self, node: DecisionNode | Leaf, sample: np.ndarray) -> int:
         if isinstance(node, Leaf):
             return highest_probability_arg(node.probabilities)
-        child = node.left if sample[node.feature_index] >= node.threshold else node.right
+        child = node.right if sample[node.feature_index] >= node.threshold else node.left
 
         return self._pl(child, sample)
 
     def _pp(self, node: DecisionNode | Leaf, sample: np.ndarray) -> np.ndarray:
         if isinstance(node, Leaf):
             return node.probabilities
-        child = node.left if sample[node.feature_index] >= node.threshold else node.right
+        child = node.right if sample[node.feature_index] >= node.threshold else node.left
 
         return self._pp(child, sample)
 
@@ -109,12 +109,12 @@ class CART:
             left_counts = np.zeros_like(right_counts)
 
             for i in range(n_samples - 1):
+                label = labels_sorted[i]
+                right_counts[label] -= 1
+                left_counts[label] += 1
+
                 if features_sorted[i] == features_sorted[i + 1]:
                     continue
-
-                label = labels_sorted[i]
-                left_counts[label] += 1
-                right_counts[label] -= 1
 
                 gain = (
                     parent_impurity
@@ -125,8 +125,8 @@ class CART:
                 if gain > best_gain:
                     best_gain = gain
                     thr = (features_sorted[i] + features_sorted[i + 1]) / 2
-                    left_mask = feature_column >= thr
-                    right_mask = ~left_mask
+                    left_mask = feature_column < thr
+                    right_mask = feature_column >= thr
                     best_split = (feature_index, thr, left_mask, right_mask)
 
         return best_split
