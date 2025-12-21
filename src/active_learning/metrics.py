@@ -99,7 +99,7 @@ class LearnerTester:
             if thr < min_ratio:
                 continue
 
-            idx = next((i for i, ratio in enumerate(ratios) if ratio > thr), None)
+            idx = next((i for i, ratio in enumerate(ratios) if ratio >= thr), None)
             if idx is None:
                 break
 
