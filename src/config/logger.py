@@ -9,7 +9,7 @@ LogOutput = Literal["file", "stdout"]
 
 
 @register_config(
-    section_name="logging",
+    name="logging",
     field_mappings={"output": "log_output", "level": "log_level", "format_string": "log_format"},
 )
 @dataclass

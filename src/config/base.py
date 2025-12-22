@@ -17,7 +17,7 @@ _REGISTRY: dict[type, tuple[str, dict[str, str], dict[str, FieldParser]]] = {}
 
 
 def register_config(
-    section_name: str,
+    name: str,
     field_mappings: dict[str, str] | None = None,
     field_parsers: dict[str, FieldParser] | None = None,
 ):
@@ -37,7 +37,7 @@ def register_config(
     """
 
     def decorator(config_class: type[T_Decorator]) -> type[T_Decorator]:
-        _REGISTRY[config_class] = (section_name, field_mappings or {}, field_parsers or {})
+        _REGISTRY[config_class] = (name, field_mappings or {}, field_parsers or {})
         return config_class
 
     return decorator
