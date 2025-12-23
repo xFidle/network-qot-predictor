@@ -2,9 +2,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from src.config.base import register_config
+from src.config.parser import ConfigParser
 
 
-def parse_percentage(val: int) -> int:
+def parse_percentage(val: int, _: ConfigParser) -> int:
     if not (0 <= val <= 100):
         raise ValueError(f"Invalid percentage: {val}. Must be between 0 and 100")
     return val
