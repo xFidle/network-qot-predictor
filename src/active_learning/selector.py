@@ -64,9 +64,10 @@ class RandomSelector:
         return unlabeled_indices[relative_indices]
 
 
-def resolve_selector(
-    name: Literal["uncertainty", "diversity", "random"], classifier: Classifier
-) -> Selector:
+type SelectorName = Literal["uncertainty", "diversity", "random"]
+
+
+def resolve_selector(name: SelectorName, classifier: Classifier) -> Selector:
     match name:
         case "uncertainty":
             return UncertaintySelector(classifier)

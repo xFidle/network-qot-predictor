@@ -2,8 +2,12 @@ from typing import Literal, Protocol
 
 import numpy as np
 
-from .forest.forest import CARTConfig, RandomForest, RandomForestConfig
+from src.config import ConfigParser
+
+from .forest.forest import RandomForest, RandomForestConfig
 from .svm.svm import SVM, SVMConfig
+
+type ClassifierName = Literal["svm", "forest"]
 
 
 class Classifier(Protocol):
@@ -12,15 +16,10 @@ class Classifier(Protocol):
     def predict_proba(self, X: np.ndarray) -> np.ndarray: ...
 
 
-def resolve_model(name: Literal["svm", "forest"]) -> Classifier:
+def resolve_classifier(name: ClassifierName, p: ConfigParser) -> Classifier:
     match name:
         case "svm":
-            svm_config = SVMConfig(learning_rate=0.1, penalty=100, iter_count=1000)
-            return SVM(svm_config)
+            return SVM(p.get(SVMConfig))
 
         case "forest":
-            cart_config = CARTConfig(max_depth=10, min_samples_split=2)
-            forest_config = RandomForestConfig(
-                n_trees=100, tree_config=cart_config, multiprocessing=True
-            )
-            return RandomForest(forest_config)
+            return RandomForest(p.get(RandomForestConfig))

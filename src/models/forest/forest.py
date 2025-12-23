@@ -1,17 +1,20 @@
 from concurrent.futures import ProcessPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
+
+from src.config import register_config
 
 from .cart import CART, CARTConfig
 from .util import majority_vote
 
 
+@register_config(name="forest")
 @dataclass
 class RandomForestConfig:
-    n_trees: int
-    tree_config: CARTConfig
-    multiprocessing: bool
+    tree_config: CARTConfig = field(default_factory=CARTConfig)
+    n_trees: int = 100
+    multiprocessing: bool = False
     seed: int = 42
 
 

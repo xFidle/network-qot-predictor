@@ -4,9 +4,9 @@ from typing import Any
 
 import numpy as np
 
-from src.models.classifier import Classifier
-
-from .selector import Selector
+from src.active_learning.selector import SelectorName, resolve_selector
+from src.config import ConfigParser, register_config
+from src.models.classifier import ClassifierName, resolve_classifier
 
 
 @dataclass
@@ -16,12 +16,13 @@ class ExperimentResults:
     proba: np.ndarray
 
 
+@register_config("active_learner")
 @dataclass
 class ActiveLearnerConfig:
-    classifier: Classifier
-    selector: Selector
-    batch_size: int
-    should_store_results: bool
+    classifier_name: ClassifierName = "forest"
+    selector_name: SelectorName = "uncertainty"
+    batch_size: int = 10
+    should_store_results: bool = True
 
 
 @dataclass
@@ -38,9 +39,9 @@ class MultiprocessingContext:
 
 
 class ActiveLearner:
-    def __init__(self, config: ActiveLearnerConfig, data: LearningData) -> None:
-        self._classifier = config.classifier
-        self._selector = config.selector
+    def __init__(self, config: ActiveLearnerConfig, data: LearningData, p: ConfigParser) -> None:
+        self._classifier = resolve_classifier(config.classifier_name, p)
+        self._selector = resolve_selector(config.selector_name, self._classifier)
         self._batch_size = config.batch_size
         self._should_store_results = config.should_store_results
         self._data = data

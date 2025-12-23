@@ -6,9 +6,9 @@ from scipy.optimize import minimize
 
 @dataclass
 class SVMConfig:
-    learning_rate: float
-    penalty: float  # C param
-    iter_count: int
+    learning_rate: float = 0.1
+    penalty: float = 100  # C param
+    iter_count: int = 1000
 
 
 class SVM:
@@ -69,7 +69,7 @@ class SVM:
 
         targets = np.where(y_binary == 1, t_pos, t_neg)
 
-        def neg_log_likelihood(params):
+        def neg_log_likelihood(params: np.ndarray) -> float:
             a, b = params
             pred_proba = 1 / (1 + np.exp(a * decision_values + b))
             pred_proba = np.clip(pred_proba, 1e-15, 1 - 1e-15)
