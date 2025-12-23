@@ -66,7 +66,8 @@ def test_get_field_mappings_unregistered():
 
 
 def test_get_all_registered_contains_actual_configs():
-    from src.config import ImageProcessingConfig, LoggerConfig
+    from src.image_processing import ImageProcessingConfig
+    from src.utils.logger import LoggerConfig
 
     registered = get_all_registered()
 

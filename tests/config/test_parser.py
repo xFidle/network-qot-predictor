@@ -4,8 +4,10 @@ from typing import Any
 
 import pytest
 
-from src.config import ConfigParser, ImageProcessingConfig, LoggerConfig
+from src.image_processing import ImageProcessingConfig
+from src.utils.logger import LoggerConfig
 from src.config.base import register_config
+from src.config.parser import ConfigParser
 
 
 def test_init_creates_example_config_if_missing(tmp_path: Path):
