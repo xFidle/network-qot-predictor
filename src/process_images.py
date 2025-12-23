@@ -60,7 +60,7 @@ def download_data(
 
 
 def main():
-    config_parser = ConfigParser()
+    config_parser = ConfigParser("image_processing_config")
     image_processing_config = config_parser.get(ImageProcessingConfig)
     logger_config = config_parser.get(LoggerConfig)
     data_procesing_config = config_parser.get(DataProcessingConfig)
