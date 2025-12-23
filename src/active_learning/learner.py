@@ -16,7 +16,7 @@ class ExperimentResults:
     proba: np.ndarray
 
 
-@register_config("active_learner")
+@register_config(name="active_learner")
 @dataclass
 class ActiveLearnerConfig:
     classifier_name: ClassifierName = "forest"

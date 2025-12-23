@@ -10,7 +10,7 @@ def parse_percentage(val: int) -> int:
     return val
 
 
-@register_config("data_processing", field_parsers={"unlabeled_percentage": parse_percentage})
+@register_config(name="data_processing", field_parsers={"unlabeled_percentage": parse_percentage})
 @dataclass
 class DataProcessingConfig:
     output_dir: Path = Path("data/active_learning")
