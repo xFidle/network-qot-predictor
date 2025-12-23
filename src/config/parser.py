@@ -1,7 +1,7 @@
 import types
+from dataclasses import fields, is_dataclass
 from pathlib import Path
 from typing import Any, TypeVar, Union, get_args, get_origin
-from dataclasses import fields, is_dataclass
 
 from src.config.base import (
     DataclassInstance,
@@ -72,7 +72,7 @@ class ConfigParser:
 
     def _get_root_configs(self) -> list[type[DataclassInstance]]:
         all_configs = get_all_registered()
-        nested_configs = set()
+        nested_configs = set[DataclassInstance | type[DataclassInstance]]()
         for config_class in all_configs:
             for field in fields(config_class):
                 field_type = field.type
