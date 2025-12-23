@@ -20,6 +20,8 @@ from .learner import (
     MultiprocessingContext,
 )
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class TesterConfig:
@@ -60,14 +62,24 @@ class LearnerTester:
             raise ValueError("Learener must store metrics to aggregate them later")
 
         batch = self._get_splits(X, y)
+        logger.info("Splits for repeated K-fold created")
+
+        logger.info("Processing splits")
         trials = self._process_data(batch)
 
         aucs = self._extract_aucs(trials)
+        logger.info("PR AUCs extracted from experiments")
+
         prs = self._extract_prs(trials)
+        logger.info("Precision-recall curves exctracted from experiments")
 
         self.save_dir.mkdir(parents=True, exist_ok=True)
+
         self._save_aucs(trials[0].labeled_ratio, aucs)
+        logger.info("PR AUCs saved to .csv file")
+
         self._save_prs(prs)
+        logger.info("Precision-recall curves saved to .csv files")
 
     def _get_splits(self, X: np.ndarray, y: np.ndarray) -> LearningBatch:
         data: list[LearningData] = []
