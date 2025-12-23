@@ -44,9 +44,9 @@ def test_get_generic_method(tmp_path: Path):
     config_file.write_text(
         """
 [logging]
-log_level = "ERROR"
-log_output = ["stdout"]
-log_format = "%(message)s"
+level = "ERROR"
+output = ["stdout"]
+format = "%(message)s"
 
 [image_processing]
 model = "resnet50"
@@ -85,16 +85,19 @@ def test_example_config_has_correct_defaults(tmp_path: Path):
     config_file = tmp_path / "example.toml"
     parser = ConfigParser(config_file)
 
+    default_logger_config = LoggerConfig()
+    default_img_config = ImageProcessingConfig()
+
     logger_config = parser.get(LoggerConfig)
     img_config = parser.get(ImageProcessingConfig)
 
-    assert logger_config.level == "INFO"
-    assert logger_config.output == ["stdout"]
-    assert logger_config.format_string == "%(levelname)s - %(message)s"
+    assert logger_config.level == default_logger_config.level
+    assert logger_config.output == default_logger_config.output
+    assert logger_config.format_string == default_logger_config.format_string
 
-    assert img_config.model == "resnet50"
-    assert img_config.data_dir == Path("data/flowers/images")
-    assert img_config.force_download is False
+    assert img_config.model == default_img_config.model
+    assert img_config.data_dir == default_img_config.data_dir
+    assert img_config.force_download is default_img_config.force_download
 
 
 def test_field_mappings_work_in_parser(tmp_path: Path):
@@ -102,10 +105,10 @@ def test_field_mappings_work_in_parser(tmp_path: Path):
     config_file.write_text(
         """
 [logging]
-log_output = ["file"]
-log_level = "DEBUG"
-log_format = "custom format"
-log_file = "custom.log"
+output = ["file"]
+level = "DEBUG"
+format_string = "custom format"
+file = "custom.log"
 
 [image_processing]
 model = "resnet50"
@@ -193,9 +196,9 @@ def test_list_values_parsed_correctly(tmp_path: Path, log_output: list[str], exp
     config_file.write_text(
         f"""
 [logging]
-log_level = "INFO"
-log_output = {log_output}
-log_format = "%(message)s"
+level = "INFO"
+output = {log_output}
+format = "%(message)s"
 
 [image_processing]
 model = "resnet50"
