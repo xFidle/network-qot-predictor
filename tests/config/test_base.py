@@ -43,7 +43,7 @@ def test_register_config_with_parsers():
 
     parser = ConfigParser()
     section_data = {"doubled": "5"}
-    config = parser.parse_config(ParsedConfig, section_data)
+    config = parser._parse_config(ParsedConfig, section_data)
     assert config.doubled == 10
 
 

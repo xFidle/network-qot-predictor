@@ -82,7 +82,7 @@ data_dir = "data"
 
     parser = ConfigParser(config_file)
 
-    with pytest.raises(ValueError, match="Missing \\[logging\\] section"):
+    with pytest.raises(ValueError, match="Missing logging .*"):
         parser.get(LoggerConfig)
 
 
@@ -237,7 +237,7 @@ def test_parse_config_basic(
         enabled: bool = False
 
     parser = ConfigParser()
-    config = parser.parse_config(BasicConfig, section_data)
+    config = parser._parse_config(BasicConfig, section_data)
 
     assert config.name == expected_name
     assert config.count == expected_count
@@ -262,7 +262,7 @@ def test_parse_config_with_defaults(
         optional: int = 100
 
     parser = ConfigParser()
-    config = parser.parse_config(DefaultsConfig, section_data)
+    config = parser._parse_config(DefaultsConfig, section_data)
 
     assert config.required == expected_required
     assert config.optional == expected_optional
@@ -288,7 +288,7 @@ def test_parse_config_with_field_mappings(
         level: str = "INFO"
 
     parser = ConfigParser()
-    config = parser.parse_config(MappingsConfig, section_data)
+    config = parser._parse_config(MappingsConfig, section_data)
 
     assert config.output == expected_output
     assert config.level == expected_level
@@ -308,7 +308,7 @@ def test_parse_config_with_custom_parser(section_data: dict[str, Any], expected_
         name: str = "default"
 
     parser = ConfigParser()
-    config = parser.parse_config(CustomConfig, section_data)
+    config = parser._parse_config(CustomConfig, section_data)
     assert config.name == expected_name
 
 
@@ -334,7 +334,7 @@ def test_parse_config_path_conversion(
         output_dir: Path = Path("output")
 
     parser = ConfigParser()
-    config = parser.parse_config(PathConfig, section_data)
+    config = parser._parse_config(PathConfig, section_data)
 
     assert isinstance(config.data_dir, Path)
     assert isinstance(config.output_dir, Path)
@@ -358,7 +358,7 @@ def test_parse_config_list_field(section_data: dict[str, Any], expected_items: l
         items: list[str] = field(default_factory=list)
 
     parser = ConfigParser()
-    config = parser.parse_config(ListConfig, section_data)
+    config = parser._parse_config(ListConfig, section_data)
     assert config.items == expected_items
 
 
@@ -369,7 +369,7 @@ def test_parse_config_unregistered_class():
 
     parser = ConfigParser()
     with pytest.raises(ValueError, match="not registered"):
-        parser.parse_config(UnregisteredConfig, {"value": "data"})
+        parser._parse_config(UnregisteredConfig, {"value": "data"})
 
 
 @pytest.mark.parametrize(
@@ -397,7 +397,7 @@ def test_multiple_field_mappings_and_parsers(
 
     section_data = {"num": num_value, "text": text_value}
     parser = ConfigParser()
-    config = parser.parse_config(ComplexConfig, section_data)
+    config = parser._parse_config(ComplexConfig, section_data)
 
     assert config.internal_num == expected_num
     assert config.internal_text == expected_text
@@ -421,7 +421,7 @@ def test_parse_config_optional_path(
         name: str = "default"
 
     parser = ConfigParser()
-    config = parser.parse_config(OptionalConfig, section_data)
+    config = parser._parse_config(OptionalConfig, section_data)
 
     assert config.data_path == expected_path
     if expected_path is not None:
@@ -445,7 +445,7 @@ def test_parse_config_nested_dataclass():
     section_data = {"name": "myapp", "server": {"host": "example.com", "port": 9000}}
 
     parser = ConfigParser()
-    config = parser.parse_config(ParentConfig, section_data)
+    config = parser._parse_config(ParentConfig, section_data)
 
     assert config.name == "myapp"
     assert isinstance(config.server, NestedConfig)
@@ -468,7 +468,7 @@ def test_parse_config_optional_nested_dataclass():
 
     section_data_with_db = {"name": "myapp", "database": {"host": "db.example.com", "port": 3306}}
     parser = ConfigParser()
-    config_with_db = parser.parse_config(AppConfig, section_data_with_db)
+    config_with_db = parser._parse_config(AppConfig, section_data_with_db)
 
     assert config_with_db.name == "myapp"
     assert isinstance(config_with_db.database, DatabaseConfig)
@@ -476,7 +476,7 @@ def test_parse_config_optional_nested_dataclass():
     assert config_with_db.database.port == 3306
 
     section_data_no_db = {"name": "simpleapp"}
-    config_no_db = parser.parse_config(AppConfig, section_data_no_db)
+    config_no_db = parser._parse_config(AppConfig, section_data_no_db)
 
     assert config_no_db.name == "simpleapp"
     assert config_no_db.database is None
