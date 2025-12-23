@@ -5,12 +5,15 @@ from pathlib import Path
 import kagglehub
 
 from src.config import ConfigParser
-from src.config.data_processing import DataProcessingConfig
-from src.config.image_processing import ImageProcessingConfig
-from src.config.logger import LoggerConfig
-from src.data_processing.data_processing import merge_datasets, save_to_file, shrink_minority_class
+from src.data_processing.data_processing import (
+    DataProcessingConfig,
+    merge_datasets,
+    save_to_file,
+    shrink_minority_class,
+)
 from src.image_processing import FeatureExtractor
-from src.utils.logger import setup_root_logger
+from src.image_processing.config import ImageProcessingConfig
+from src.utils.logger import LoggerConfig, setup_root_logger
 
 logger = logging.getLogger(__name__)
 

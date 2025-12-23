@@ -1,1 +1,2 @@
-from feature_extractor import FeatureExtractor
+from src.image_processing.feature_extractor import FeatureExtractor
+from src.image_processing.config import ImageProcessingConfig

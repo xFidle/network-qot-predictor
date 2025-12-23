@@ -12,8 +12,8 @@ from src.config.base import (
     get_section_name,
     is_registered,
 )
-from src.config.config_format import ConfigFormat
-from src.config.toml_format import TOMLFormat
+from src.config.format.config_format import ConfigFormat
+from src.config.format.toml_format import TOMLFormat
 
 T = TypeVar("T", bound=DataclassInstance)
 
