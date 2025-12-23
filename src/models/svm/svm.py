@@ -1,9 +1,13 @@
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy.optimize import minimize
 
 from src.config.base import register_config
+
+if TYPE_CHECKING:
+    from src.models.classifier import ClassifierName
 
 
 @register_config("svm")
@@ -15,7 +19,12 @@ class SVMConfig:
 
 
 class SVM:
-    def __init__(self, config: SVMConfig) -> None:
+    name: "ClassifierName" = "svm"
+
+    def __init__(self, config: SVMConfig | None = None) -> None:
+        if config is None:
+            config = SVMConfig()
+
         self.learning_rate: float = config.learning_rate
         self.penalty: float = config.penalty
         self.iter_count: int = config.iter_count

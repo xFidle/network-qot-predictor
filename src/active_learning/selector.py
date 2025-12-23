@@ -5,13 +5,20 @@ import numpy as np
 from src.models.classifier import Classifier
 
 
+type SelectorName = Literal["uncertainty", "diversity", "random"]
+
+
 class Selector(Protocol):
+    name: SelectorName
+
     def __call__(
         self, X_pool: np.ndarray, labeled_mask: np.ndarray, batch_size: int = 5
     ) -> np.ndarray: ...
 
 
 class UncertaintySelector:
+    name: SelectorName = "uncertainty"
+
     def __init__(self, classifier: Classifier) -> None:
         self.classifier: Classifier = classifier
 
@@ -30,6 +37,8 @@ class UncertaintySelector:
 
 
 class DiversitySelector:
+    name: SelectorName = "diversity"
+
     def __call__(
         self, X_pool: np.ndarray, labeled_mask: np.ndarray, batch_size: int = 5
     ) -> np.ndarray:
@@ -49,6 +58,8 @@ class DiversitySelector:
 
 
 class RandomSelector:
+    name: SelectorName = "random"
+
     def __init__(self, random_state: int | None = None) -> None:
         self.rng = np.random.default_rng(random_state)
 
@@ -62,9 +73,6 @@ class RandomSelector:
         relative_indices = self.rng.choice(X_unlabeled.shape[0], size, replace=False)
 
         return unlabeled_indices[relative_indices]
-
-
-type SelectorName = Literal["uncertainty", "diversity", "random"]
 
 
 def resolve_selector(name: SelectorName, classifier: Classifier) -> Selector:

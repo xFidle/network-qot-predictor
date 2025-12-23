@@ -1,9 +1,13 @@
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from src.config import register_config
+
+if TYPE_CHECKING:
+    from src.models.classifier import ClassifierName
 
 from .cart import CART, CARTConfig
 from .util import majority_vote
@@ -19,7 +23,12 @@ class RandomForestConfig:
 
 
 class RandomForest:
-    def __init__(self, config: RandomForestConfig) -> None:
+    name: "ClassifierName" = "forest"
+
+    def __init__(self, config: RandomForestConfig | None = None) -> None:
+        if config is None:
+            config = RandomForestConfig()
+
         self._trees: list[CART] = []
         self._selected_features: list[np.ndarray] = []
         self._n_trees = config.n_trees
