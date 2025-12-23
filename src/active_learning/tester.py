@@ -176,9 +176,12 @@ class LearnerTester:
         data = {
             "labeled_ratio": ratios,
             "mean": np.mean(aucs, axis=0),
+            "median": np.median(aucs, axis=0),
             "std": np.std(aucs, axis=0),
             "min": np.min(aucs, axis=0),
             "max": np.max(aucs, axis=0),
+            "p25": np.percentile(aucs, 25, axis=0),
+            "p75": np.percentile(aucs, 75, axis=0),
         }
 
         pd.DataFrame(data).to_csv(self.save_dir / "auc-results.csv", index=False)
