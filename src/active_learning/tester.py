@@ -1,15 +1,16 @@
-import multiprocessing
 import os
 from concurrent.futures import Future, ProcessPoolExecutor
 from dataclasses import dataclass, field
+from multiprocessing import Manager, Queue
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
-from rich import progress
 from sklearn.metrics import average_precision_score, precision_recall_curve
 from sklearn.model_selection import RepeatedStratifiedKFold
+
+from src.utils.progress_bar import setup_progress_bars
 
 from .learner import (
     ActiveLearner,
@@ -37,6 +38,13 @@ class PRResult:
     recall: np.ndarray
 
 
+@dataclass
+class LearningBatch:
+    data: list[LearningData]
+    input: list[np.ndarray]
+    target: list[np.ndarray]
+
+
 class LearnerTester:
     def __init__(self, learner_config: ActiveLearnerConfig, config: TesterConfig) -> None:
         self.learner_config = learner_config
@@ -51,9 +59,20 @@ class LearnerTester:
         if not self.learner_config.store_results:
             raise ValueError("Learener must store metrics to aggregate them later")
 
-        learners: list[ActiveLearner] = []
-        learners_X_test: list[np.ndarray] = []
-        learners_y_test: list[np.ndarray] = []
+        batch = self._get_splits(X, y)
+        trials = self._process_data(batch)
+
+        aucs = self._extract_aucs(trials)
+        prs = self._extract_prs(trials)
+
+        self.save_dir.mkdir(parents=True, exist_ok=True)
+        self._save_aucs(trials[0].labeled_ratio, aucs)
+        self._save_prs(prs)
+
+    def _get_splits(self, X: np.ndarray, y: np.ndarray) -> LearningBatch:
+        data: list[LearningData] = []
+        inputs: list[np.ndarray] = []
+        targets: list[np.ndarray] = []
 
         rskf = RepeatedStratifiedKFold(n_splits=self.n_splits, n_repeats=self.n_repeats)
         for train_index, test_index in rskf.split(X, y):
@@ -66,35 +85,35 @@ class LearnerTester:
             labeled_mask[:n_labeled] = True
             self.tester_rng.shuffle(labeled_mask)
 
-            learner = ActiveLearner(
-                self.learner_config, LearningData(X_train, y_train, labeled_mask)
-            )
+            data.append(LearningData(X_train, y_train, labeled_mask))
+            inputs.append(X_test)
+            targets.append(y_test)
 
-            learners.append(learner)
-            learners_X_test.append(X_test)
-            learners_y_test.append(y_test)
+        return LearningBatch(data, inputs, targets)
 
-        n_learners = len(learners)
-        with _progress() as progress:
-            with multiprocessing.Manager() as manager:
+    def _process_data(self, batch: LearningBatch) -> list[ExperimentResults]:
+        n_learners = len(batch.data)
+        with setup_progress_bars() as progress:
+            with Manager() as manager:
                 futures: list[Future[ExperimentResults]] = []
-                update_queue: "multiprocessing.Queue[dict[str, Any]]" = manager.Queue()  # type: ignore
-                overall_progress = progress.add_task("[green]Total learners progres:")
+                update_queue: "Queue[dict[str, Any]]" = manager.Queue()  # type: ignore
+                overall_progress = progress.add_task("[green]Total learners progress:")
 
                 with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
                     for i in range(n_learners):
                         learner_id = progress.add_task(f"Learner {i:02d}", visible=True)
                         futures.append(
                             executor.submit(
-                                _run_single_learner,
-                                learners[i],
-                                learners_X_test[i],
-                                learners_y_test[i],
+                                self._run_single_learner,
+                                batch.data[i],
+                                batch.input[i],
+                                batch.target[i],
                                 MultiprocessingContext(learner_id, update_queue),
                             )
                         )
 
-                    while (n_finished := sum([f.done() for f in futures])) < len(futures):
+                    n_finished = 0
+                    while n_finished < len(futures):
                         event = update_queue.get()
                         progress.update(overall_progress, completed=n_finished, total=n_learners)
 
@@ -103,16 +122,12 @@ class LearnerTester:
                         total = event["total"]
                         progress.update(task_id, completed=completed, total=total)
 
+                        if completed == total:
+                            n_finished += 1
+
                     progress.update(overall_progress, completed=n_learners)
 
-        trials = [f.result() for f in futures]
-
-        aucs = self._extract_aucs(trials)
-        prs = self._extract_prs(trials)
-
-        self.save_dir.mkdir(parents=True, exist_ok=True)
-        self._save_aucs(trials[0].labeled_ratio, aucs)
-        self._save_prs(prs)
+        return [f.result() for f in futures]
 
     def _extract_aucs(self, trials: list[ExperimentResults]) -> np.ndarray:
         aucs = np.array(
@@ -163,20 +178,13 @@ class LearnerTester:
                 self.save_dir / f"precision-recall-{round(pr.threshold, 2) * 100}.csv", index=False
             )
 
-
-def _run_single_learner(
-    learner: ActiveLearner, X_test: np.ndarray, y_test: np.ndarray, ctx: MultiprocessingContext
-) -> ExperimentResults:
-    learner.loop(X_test, y_test, ctx)
-    return learner.results
-
-
-def _progress() -> progress.Progress:
-    return progress.Progress(
-        "[progress.description]{task.description}",
-        progress.BarColumn(),
-        "[progress.percentage]{task.percentage:>3.0f}%",
-        progress.TimeRemainingColumn(),
-        progress.TimeElapsedColumn(),
-        refresh_per_second=1,
-    )
+    def _run_single_learner(
+        self,
+        learning_data: LearningData,
+        X_test: np.ndarray,
+        y_test: np.ndarray,
+        ctx: MultiprocessingContext,
+    ) -> ExperimentResults:
+        learner = ActiveLearner(self.learner_config, learning_data)
+        learner.loop(X_test, y_test, ctx)
+        return learner.results
