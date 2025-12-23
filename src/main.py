@@ -1,8 +1,8 @@
 import pandas as pd
 
 from src.active_learning.tester import ActiveLearnerConfig, LearnerTester, TesterConfig
-from src.config import ConfigParser, LoggerConfig
-from src.utils.logger import setup_root_logger
+from src.config import ConfigParser
+from src.utils.logger import LoggerConfig, setup_root_logger
 
 
 def main():

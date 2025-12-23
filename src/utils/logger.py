@@ -2,15 +2,29 @@ from __future__ import annotations
 
 import logging
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Literal
 
-from src.config.logger import LoggerConfig
+from src.config.base import register_config
 
 RESET_SEQ = "\033[0m"
 COLOR_SEQ = "\033[1;%dm"
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
 COLORS = {"WARNING": YELLOW, "INFO": GREEN, "DEBUG": BLUE, "CRITICAL": RED, "ERROR": RED}
+
+
+LogOutput = Literal["file", "stdout"]
+
+
+@register_config(name="logging")
+@dataclass
+class LoggerConfig:
+    level: str = logging.getLevelName(logging.INFO)
+    output: list[LogOutput] = field(default_factory=lambda: ["stdout"])
+    file: Path | None = None
+    format_string: str = "%(levelname)s [%(asctime)s]: %(filename)s:%(funcName)s - %(message)s"
 
 
 class ColoredFormatter(logging.Formatter):
