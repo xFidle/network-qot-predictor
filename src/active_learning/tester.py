@@ -11,7 +11,7 @@ import pandas as pd
 from sklearn.metrics import average_precision_score, precision_recall_curve
 from sklearn.model_selection import RepeatedStratifiedKFold
 
-from src.config import ConfigParser, register_config
+from src.config import register_config
 from src.utils.progress_bar import setup_progress_bars
 
 from .learner import (
