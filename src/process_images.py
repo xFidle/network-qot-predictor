@@ -10,7 +10,7 @@ from src.config.image_processing import ImageProcessingConfig
 from src.config.logger import LoggerConfig
 from src.data_processing.data_processing import merge_datasets, save_to_file, shrink_minority_class
 from src.image_processing import FeatureExtractor
-from src.utils.logger import setup_logger
+from src.utils.logger import setup_root_logger
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ def main():
     logger_config = config_parser.get(LoggerConfig)
     data_procesing_config = config_parser.get(DataProcessingConfig)
 
-    logger = setup_logger(logger_config)
+    setup_root_logger(logger_config)
 
     download_data(
         image_processing_config.data_dir,

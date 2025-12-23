@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import sys
 from pathlib import Path
@@ -19,11 +21,16 @@ class ColoredFormatter(logging.Formatter):
         return super().format(record)
 
 
-def _configure_logger(logger: logging.Logger, config: LoggerConfig) -> logging.Logger:
+def configrue_root_logger(logger: logging.Logger, config: LoggerConfig) -> None:
     logger.setLevel(config.level)
 
     colored_formatter = ColoredFormatter(config.format_string)
     plain_formatter = logging.Formatter(config.format_string)
+
+    def add_handler(handler: logging.Handler, formatter: logging.Formatter) -> None:
+        handler.setLevel(config.level)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
 
     if "file" in config.output:
         if config.log_file is None:
@@ -32,26 +39,14 @@ def _configure_logger(logger: logging.Logger, config: LoggerConfig) -> logging.L
         log_path = Path(config.log_file)
         log_path.parent.mkdir(parents=True, exist_ok=True)
 
-        file_handler = logging.FileHandler(log_path)
-        file_handler.setLevel(config.level)
-        file_handler.setFormatter(plain_formatter)
-        logger.addHandler(file_handler)
+        add_handler(logging.FileHandler(log_path), plain_formatter)
 
     if "stdout" in config.output:
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(config.level)
-        console_handler.setFormatter(colored_formatter)
-        logger.addHandler(console_handler)
-
-    return logger
+        add_handler(logging.StreamHandler(sys.stdout), colored_formatter)
 
 
-def setup_logger(config: LoggerConfig) -> logging.Logger:
-    global _global_logger_configured
-
+def setup_root_logger(config: LoggerConfig) -> None:
     root_logger = logging.getLogger()
     root_logger.handlers.clear()
 
-    _configure_logger(root_logger, config)
-
-    return root_logger
+    configrue_root_logger(root_logger, config)
