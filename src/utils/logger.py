@@ -33,10 +33,10 @@ def configrue_root_logger(logger: logging.Logger, config: LoggerConfig) -> None:
         logger.addHandler(handler)
 
     if "file" in config.output:
-        if config.log_file is None:
+        if config.file is None:
             raise ValueError("log_file must be specified when 'file' is in output")
 
-        log_path = Path(config.log_file)
+        log_path = Path(config.file)
         log_path.parent.mkdir(parents=True, exist_ok=True)
 
         add_handler(logging.FileHandler(log_path), plain_formatter)
